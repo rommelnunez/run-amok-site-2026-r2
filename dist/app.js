@@ -13,11 +13,19 @@ document.addEventListener('pointerdown', event => { if (!bar.contains(event.targ
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && bar.dataset.open === 'true') { setMenuOpen(false); menu.focus(); }
 });
-// Real anchor links supply scrolling, deep links, and browser back/forward.
-document.querySelectorAll('a[href^="#"]').forEach(link => link.addEventListener('click', () => {
-  setMenuOpen(false);
+// Keep anchor URLs/history, but use one explicit landing point. Cast opens at
+// the first profile without scrubbing through its long sticky track on the way.
+document.querySelectorAll('a[href^="#"]').forEach(link => link.addEventListener('click', event => {
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   const target = document.getElementById(link.hash.slice(1));
-  if (target) target.focus({preventScroll:true});
+  if (!target) return;
+  event.preventDefault();
+  setMenuOpen(false);
+  const headerHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height'));
+  const top = Math.max(0, scrollY + target.getBoundingClientRect().top - headerHeight);
+  if (location.hash !== link.hash) history.pushState(null, '', link.hash);
+  target.focus({preventScroll:true});
+  window.scrollTo({top, behavior: reducedMotion.matches || target.id === 'cast' ? 'instant' : 'smooth'});
 }));
 function updateNavigation() {
   let current = 'home';

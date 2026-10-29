@@ -66,10 +66,11 @@ body[data-section]:not([data-section="home"]) .site-brand { opacity: 1; visibili
 .screen-copy { width: min(100%,1080px); margin-inline: auto; text-align: center; }
 .screen-copy > h2, .section-title, .screenings-heading h2 { margin: 0 0 40px; font-weight: 400; font-size: clamp(40px,6vw,80px); line-height: 1.05; letter-spacing: -.035em; }
 .screen-copy p { font-size: clamp(18px,2vw,24px); line-height: 1.4; }
+#screenings { min-height: 0; padding-bottom: 24px; }
 #notify, #involved { display: grid; align-items: center; }
 #involved { padding-bottom: 180px; }
 /* The portrait wheel follows native document scrolling; there is no wheel interception. */
- .cast-flow { padding: 72px 0 100px; }
+.cast-flow { padding: 40px 0 100px; }
 .cast-heading { padding: 0 8%; text-align: left; }
 .cast-section { width: 100%; text-align: left; animation: none; }
 .cast-scroll-track { height: 460svh; }
@@ -160,7 +161,7 @@ body[data-section]:not([data-section="home"]) .site-brand { opacity: 1; visibili
 }
 
 /* Screenings calendar */
-.screenings { text-align: left; width: min(100%, 920px); padding: 8px 4px 20px; }
+.screenings { text-align: left; width: min(100%, 920px); padding: 8px 4px 0; }
 .screenings-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
 .screenings-heading h2 { font-size: clamp(36px, 4vw, 54px); margin: 0; }
 .calendar-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
@@ -326,7 +327,7 @@ body:has(.hero[data-reveal="open"]) { overflow: hidden; }
  .festival-laurel { top: 20px; width: 120px; }
  .director-credit { font-size: 17px; }
  .page-section { padding: 50px 6% 90px; min-height: auto; }
- .cast-flow { padding-inline: 0; }
+ .cast-flow { padding: 32px 0 90px; }
  .cast-scroll-track { height: 430svh; }
  .cast-stage { min-height: 550px; }
  .cast-text { top: 56%; }
