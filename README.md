@@ -1,13 +1,9 @@
-# Run Amok
+# Run Amok — R2
 
-Static film website. Edit `dist/index.html`, `dist/styles.css`, and `dist/app.js`. The Three.js interaction lives in `dist/bullet.js`.
+Independent revision of the four-design R1 project, based on client correspondence dated October 29, 2026.
 
-## Local preview
+Run `python3 preview.py` and open http://localhost:8766. Automatic reload is enabled. R1 remains at ../run-amok-site-2026 and http://localhost:8765.
 
-Run `python3 preview.py` and open http://localhost:8765. Saved changes reload automatically.
+R2 uses Design 2, the portal trailer interaction, continuous page scrolling, section navigation with browser history, and the client-supplied review pulls. The font remains Belanosima pending confirmation. The local Git baseline preserves all four original variants. No remote or publishing workflow is configured for this fork.
 
-## Publish
-
-Push changes to `main`. GitHub Actions publishes `dist/` to GitHub Pages.
-
-The current site includes preview screening data and organization blocks. Newsletter signup and trailer video are not connected. Contact links use info@runamok.com.
+Trailer/teaser files, newsletter integration, confirmed screenings, BTS photographs, and partner details still need production content. Existing fictional screening data and requested organization blocks are retained from R1. Do not claim functional ticketing, subscription, or video playback until connected.

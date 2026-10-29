@@ -1,68 +1,116 @@
 [
   {
-    "logo": "mashable",
-    "outlet": "Mashable",
-    "author": "Kristy Puchko",
-    "quote": "A compelling and oddball coming-of-age comedy, Run Amok is a gem."
-  },
-  {
-    "logo": "thewrap",
     "outlet": "TheWrap",
     "author": "Elizabeth Weitzman",
-    "quote": "Newcomer Alyssa Marvin guides this beguiling, darkly comic high school feature with charm and precision"
+    "quote": "[In] this beguiling, darkly comic high school feature... Mager has imbued even the broadest moments with evident empathy. And her bravado, like Meg’s, is undeniably bracing",
+    "category": "review"
   },
   {
-    "logo": "deadline",
     "outlet": "Deadline",
     "author": "Pete Hammond",
-    "quote": "Give credit to debuting feature filmmaker NB Mager for a bold idea and a teen-driven movie that could spark the right kind of conversation."
+    "quote": "A bold idea and a teen-driven movie that could spark the right kind of conversation.",
+    "category": "review"
   },
   {
-    "logo": "indiewire",
     "outlet": "IndieWire",
     "author": "Kate Erbland",
-    "quote": "The film marks the feature film debut of both young stars, and they offer enough gravitas and grace to carry it."
+    "quote": "The film marks the feature film debut of both young stars, and they offer enough gravitas and grace to carry it.",
+    "category": "review"
   },
   {
-    "logo": "au",
     "outlet": "The AU Review",
     "author": "Peter Gray",
-    "quote": "Mager delivers a debut that feels both singular and essential – a film that dares to ask not how we move on, but whether we ever truly can."
+    "quote": "Mager delivers a debut that feels both singular and essential – a film that dares to ask not how we move on, but whether we ever truly can.",
+    "category": "review"
   },
   {
-    "logo": "cinapse",
-    "outlet": "Cinapse",
-    "author": "Dan Tabor",
-    "quote": "Run Amok is an ambitious and audacious little film that delivers laughs while refusing to shy away from the harder questions beneath them."
-  },
-  {
-    "logo": "cinemafemme",
-    "outlet": "Cinema Femme",
-    "author": "Peyton Robinson",
-    "quote": "It delivers its thesis with the gall of an ambitious filmmaker unafraid of their voice and instincts."
-  },
-  {
-    "logo": "awardsradar",
     "outlet": "Awards Radar",
     "author": "Joey Magidson",
-    "quote": "Marvin is above and beyond."
+    "quote": "Marvin is above and beyond.",
+    "category": "review"
   },
   {
-    "logo": "au",
-    "outlet": "The AU Review",
-    "author": "Peter Gray",
-    "quote": "Run Amok is a tender, unconventional, and deeply humane piece of art that honors the voices of those most often sidelined in conversations about tragedy."
-  },
-  {
-    "logo": "cinapse",
     "outlet": "Cinapse",
     "author": "Dan Tabor",
-    "quote": "Much of that success rests on Alyssa Marvin, who carries the film with striking confidence and vulnerability."
+    "quote": "Run Amok is an ambitious and audacious little film that delivers laughs while refusing to shy away from the harder questions beneath them... It’s a delicate balance, but Mager pulls it off.",
+    "category": "review"
   },
   {
-    "logo": "cinemafemme",
     "outlet": "Cinema Femme",
     "author": "Peyton Robinson",
-    "quote": "What buoys “Run Amok” more than anything is Marvin’s incredibly affecting performance."
+    "quote": "‘Run Amok’ is a gusty first feature, showing promising style and an astute cultural eye... It meditates on the act of art as freedom... points an adoring eye to our society’s youth, giving them a credit that is generationally looked over.",
+    "category": "review"
+  },
+  {
+    "outlet": "Collider",
+    "author": "Taylor Gates",
+    "quote": "Run Amok offers a searing indictment of the “thoughts and prayers” culture that values political correctness over real action... hilariously pitch-perfect in the most jaw-droppingly inappropriate way.",
+    "category": "review"
+  },
+  {
+    "outlet": "The Culture Flow",
+    "author": "",
+    "quote": "“Run Amok” is a noteworthy exploration of serious themes that will resonate with audiences, particularly in our current climate. It addresses its subject matter with a degree of sincerity that is often lacking in similar narratives.",
+    "category": "review"
+  },
+  {
+    "outlet": "Mashable",
+    "author": "Kristy Puchko",
+    "quote": "A compelling and oddball coming-of-age comedy, Run Amok is a gem.",
+    "category": "review"
+  },
+  {
+    "outlet": "Review Nation",
+    "author": "Collette Garber",
+    "quote": "Run Amok stands out with its artistic approach to a chilling subject. Run Amok is an odd little film with big ideas, and one thing’s certain: you won’t forget it.",
+    "category": "review"
+  },
+  {
+    "outlet": "The Rolling Tape",
+    "author": "Adam Patla",
+    "quote": "Mager has a lot to say about the world and says it unapologetically... focuses on the healing that comes from art.",
+    "category": "review"
+  },
+  {
+    "outlet": "Rough Draft Atlanta",
+    "author": "Sammie Purcell",
+    "quote": "endlessly funny... startlingly poignant.",
+    "category": "review"
+  },
+  {
+    "outlet": "The Wall Street Journal",
+    "author": "Kyle Smith",
+    "quote": "Ms. Marvin’s combination of determination and weirdness lends the film some of the youthful exhilaration of “Rushmore.”",
+    "category": "review"
+  },
+  {
+    "outlet": "Next Best Picture",
+    "author": "Daniel Howat",
+    "quote": "With challenging themes and a risky approach, there’s a lot to love here... it hits harder than expected.",
+    "category": "reaction"
+  },
+  {
+    "outlet": "Movie Scene Canada",
+    "author": "Darren Movie Reviews",
+    "quote": "Ambitious, powerful and timely, Run Amok left me speechless. A staggering feature debut that is equally heartbreaking, hilarious and uplifting.",
+    "category": "reaction"
+  },
+  {
+    "outlet": "Geek Vibes Nation",
+    "author": "Dillon Gonzales",
+    "quote": "I laughed at the dark humor and was moved by the search for catharsis.",
+    "category": "reaction"
+  },
+  {
+    "outlet": "The Rolling Tape",
+    "author": "Sarah Cipley",
+    "quote": "A deeply funny, awkward, and moving experience on how different generations tackle a trauma... Smart, timely, bold and an experience I won’t forget.",
+    "category": "reaction"
+  },
+  {
+    "outlet": "We Live Entertainment",
+    "author": "Scott Menzel",
+    "quote": "The film takes major creative swings... deserves to be respected for its willingness to push boundaries and take risks that most films would avoid.",
+    "category": "reaction"
   }
 ]

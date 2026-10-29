@@ -1,161 +1,92 @@
+const hero = document.querySelector('.hero');
 const menu = document.querySelector('.menu-toggle');
 const bar = document.querySelector('.bottom-nav');
-const hero = document.querySelector('.hero');
-const designButtons = document.querySelectorAll('.design-switcher button');
-
+const navLinks = [...bar.querySelectorAll('a[href^="#"]')];
+const sections = [...document.querySelectorAll('main > section')];
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 function setMenuOpen(open) {
-  if (open) setCollectionsOpen(false);
   menu.setAttribute('aria-expanded', String(open));
   bar.dataset.open = String(open);
 }
-
-menu.addEventListener('click', () => {
-  setMenuOpen(menu.getAttribute('aria-expanded') !== 'true');
-});
+menu.addEventListener('click', () => setMenuOpen(bar.dataset.open !== 'true'));
+document.addEventListener('pointerdown', event => { if (!bar.contains(event.target)) setMenuOpen(false); });
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape') setMenuOpen(false);
+  if (event.key === 'Escape' && bar.dataset.open === 'true') { setMenuOpen(false); menu.focus(); }
 });
-
-designButtons.forEach(button => {
-  button.addEventListener('click', () => {
-    designButtons.forEach(item => {
-      item.setAttribute('aria-pressed', String(item === button));
-    });
-    closeTrailer(false);
-    hero.dataset.design = button.dataset.design;
-    if (collection === 'poster') renderGallery();
-    document.querySelector('meta[name="theme-color"]').content = button.dataset.color;
-  });
-});
-
-const viewButtons = document.querySelectorAll('.bottom-nav [data-view]');
-const panels = document.querySelectorAll('[data-panel]');
-const panelRegion = document.querySelector('.screen-panel');
-function showView(view) {
-  window.scrollTo({top: 0, behavior: 'instant'});
-  hero.dataset.view = view;
-  panelRegion.inert = view === 'home';
-  panels.forEach(panel => { panel.hidden = panel.dataset.panel !== view; });
-  viewButtons.forEach(button => {
-    if (button.dataset.view === view) button.setAttribute('aria-current', 'page');
-    else button.removeAttribute('aria-current');
-  });
+// Real anchor links supply scrolling, deep links, and browser back/forward.
+document.querySelectorAll('a[href^="#"]').forEach(link => link.addEventListener('click', () => {
   setMenuOpen(false);
-  if (view === 'cast') requestAnimationFrame(updateCastWheel);
-}
-viewButtons.forEach(button => button.addEventListener('click', () => {
-  if (button.dataset.view === 'more' && hero.dataset.view === 'more') {
-    const open = bar.dataset.open === 'true' || collectionSelector.dataset.open !== 'true';
-    setMenuOpen(false);
-    setCollectionsOpen(open);
-    return;
-  }
-  showView(button.dataset.view);
-  setCollectionsOpen(button.dataset.view === 'more');
+  const target = document.getElementById(link.hash.slice(1));
+  if (target) target.focus({preventScroll:true});
 }));
-
+function updateNavigation() {
+  let current = 'home';
+  const threshold = innerHeight * .35;
+  for (const section of sections) if (section.getBoundingClientRect().top <= threshold) current = section.id;
+  if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) current = sections.at(-1).id;
+  document.body.dataset.section = current;
+  navLinks.forEach(link => {
+    if (link.hash === '#'+current) link.setAttribute('aria-current','location');
+    else link.removeAttribute('aria-current');
+  });
+}
 const revealTrigger = document.querySelector('.reveal-trigger');
 const trailerControls = document.querySelector('.trailer-controls');
 const trailerClose = document.querySelector('.trailer-close');
+const siteBrand = document.querySelector('.site-brand');
 let pointerFrame = 0;
-function canReveal() { return hero.dataset.view === 'home' && hero.dataset.reveal !== 'open'; }
-hero.addEventListener('pointermove', event => {
-  if (!canReveal() || event.pointerType === 'touch') return;
+function canReveal() { return hero.dataset.reveal !== 'open'; }
+function cancelRevealHover() {
   cancelAnimationFrame(pointerFrame);
-  const { clientX, clientY } = event;
+  if (canReveal()) hero.dataset.reveal = '';
+}
+hero.addEventListener('pointermove', event => {
+  if (!canReveal() || event.pointerType === 'touch' || matchMedia('(max-width:700px)').matches) return;
+  if (event.target.closest('a')) { cancelRevealHover(); return; }
+  cancelAnimationFrame(pointerFrame);
+  const {clientX,clientY} = event;
   pointerFrame = requestAnimationFrame(() => {
     if (!canReveal()) return;
     const bounds = hero.getBoundingClientRect();
-    hero.style.setProperty('--pointer-x', `${clientX - bounds.left}px`);
-    hero.style.setProperty('--pointer-y', `${clientY - bounds.top}px`);
+    hero.style.setProperty('--pointer-x', `${clientX-bounds.left}px`);
+    hero.style.setProperty('--pointer-y', `${clientY-bounds.top}px`);
     hero.dataset.reveal = 'hover';
   });
 });
-function cancelRevealHover() {
-  cancelAnimationFrame(pointerFrame);
-  if (hero.dataset.reveal !== 'open') hero.dataset.reveal = '';
-}
-hero.addEventListener('pointerleave', cancelRevealHover);
-const designSwitcher = document.querySelector('.design-switcher');
-designSwitcher.addEventListener('pointerenter', cancelRevealHover);
-designSwitcher.addEventListener('focusin', cancelRevealHover);
-function closeTrailer(restoreFocus = true) {
-  cancelAnimationFrame(pointerFrame);
+hero.addEventListener('pointerleave',cancelRevealHover);
+window.addEventListener('resize',()=>{
+  if (!canReveal()) return;
+  hero.style.removeProperty('--pointer-x');
+  hero.style.removeProperty('--pointer-y');
+  cancelRevealHover();
+});
+bar.addEventListener('pointerenter',cancelRevealHover);
+function closeTrailer(restoreFocus=true) {
   hero.dataset.reveal = '';
   trailerControls.hidden = true;
-  document.querySelector('.bottom-nav').inert = false;
-  document.querySelector('.design-switcher').inert = false;
-  if (restoreFocus) revealTrigger.focus({ preventScroll: true });
+  trailerControls.removeAttribute('aria-modal');
+  bar.inert = siteBrand.inert = false;
+  sections.filter(section=>section!==hero).forEach(section=>section.inert=false);
+  if (restoreFocus) revealTrigger.focus({preventScroll:true});
 }
-revealTrigger.addEventListener('click', event => {
-  if (event.detail !== 0 && suppressTouchClick) { suppressTouchClick = false; return; }
+revealTrigger.addEventListener('click', () => {
   if (!canReveal()) return;
-  hero.dataset.peekUsed = 'true';
   cancelAnimationFrame(pointerFrame);
   hero.dataset.reveal = 'open';
   trailerControls.hidden = false;
-  document.querySelector('.bottom-nav').inert = true;
-
-  trailerClose.focus({ preventScroll: true });
+  trailerControls.setAttribute('role','dialog');
+  trailerControls.setAttribute('aria-modal','true');
+  bar.inert = siteBrand.inert = true;
+  sections.filter(section=>section!==hero).forEach(section=>section.inert=true);
+  trailerClose.focus({preventScroll:true});
 });
-trailerClose.addEventListener('click', () => closeTrailer());
-document.addEventListener('keydown', event => {
+trailerClose.addEventListener('click',()=>closeTrailer());
+document.addEventListener('keydown',event=>{
   if (hero.dataset.reveal !== 'open') return;
   if (event.key === 'Escape') closeTrailer();
-  if (event.key === 'Tab') {
-    const focusable = [...designButtons, trailerClose];
-    const current = focusable.indexOf(document.activeElement);
-    const next = (current + (event.shiftKey ? -1 : 1) + focusable.length) % focusable.length;
-    event.preventDefault();
-    focusable[next].focus();
-  }
+  if (event.key === 'Tab') { event.preventDefault(); trailerClose.focus(); }
 });
-
-// Pointer capture keeps a touch drag attached to the peephole, even outside its bounds.
-let touchDrag = null;
-let suppressTouchClick = false;
-revealTrigger.addEventListener('pointerdown', event => {
-  if (event.pointerType !== 'touch' || !event.isPrimary || !canReveal()) return;
-  cancelAnimationFrame(pointerFrame);
-  suppressTouchClick = false;
-  const rect = revealTrigger.getBoundingClientRect();
-  touchDrag = {
-    id: event.pointerId,
-    startX: event.clientX,
-    startY: event.clientY,
-    offsetX: event.clientX - (rect.left + rect.width / 2),
-    offsetY: event.clientY - (rect.top + rect.height / 2),
-    moved: false
-  };
-  revealTrigger.setPointerCapture(event.pointerId);
-});
-revealTrigger.addEventListener('pointermove', event => {
-  if (!touchDrag || event.pointerId !== touchDrag.id) return;
-  if (Math.hypot(event.clientX - touchDrag.startX, event.clientY - touchDrag.startY) > 10) {
-    touchDrag.moved = true;
-  }
-  if (!touchDrag.moved) return;
-  hero.dataset.peekUsed = 'true';
-  hero.dataset.dragging = 'true';
-  const bounds = hero.getBoundingClientRect();
-  const marginX = Math.min(120, bounds.width / 2);
-  const marginY = Math.min(120, bounds.height / 2);
-  const x = Math.max(marginX, Math.min(bounds.width - marginX, event.clientX - bounds.left - touchDrag.offsetX));
-  const y = Math.max(marginY, Math.min(bounds.height - marginY, event.clientY - bounds.top - touchDrag.offsetY));
-  hero.style.setProperty('--pointer-x', `${x}px`);
-  hero.style.setProperty('--pointer-y', `${y}px`);
-});
-function finishTouchDrag(event) {
-  if (!touchDrag || event.pointerId !== touchDrag.id) return;
-  suppressTouchClick = touchDrag.moved || event.type !== 'pointerup';
-  touchDrag = null;
-  delete hero.dataset.dragging;
-  if (revealTrigger.hasPointerCapture(event.pointerId)) revealTrigger.releasePointerCapture(event.pointerId);
-}
-revealTrigger.addEventListener('pointerup', finishTouchDrag);
-revealTrigger.addEventListener('pointercancel', finishTouchDrag);
-revealTrigger.addEventListener('lostpointercapture', finishTouchDrag);
-
+// Touch users tap to open; swiping vertically over the portal still scrolls the page.
 // Deliberately fictional screening data; replace this array when bookings are confirmed.
 const screeningData = [
   { day: 6, city: 'New York', venue: 'Downtown Cinema', time: '10:45 AM ET', special: false },
@@ -231,8 +162,7 @@ let castIndex = 0;
 let castFrame = 0;
 function castStepSize() { return (castTrack.offsetHeight - castStage.offsetHeight) / (castCopies.length - 1); }
 function updateCastWheel() {
-  if (hero.dataset.view !== 'cast') return;
-  const progress = Math.max(0,Math.min(castCopies.length-1,-castTrack.getBoundingClientRect().top / castStepSize()));
+  const progress = Math.max(0,Math.min(castCopies.length-1,(parseFloat(getComputedStyle(castStage).top) - castTrack.getBoundingClientRect().top) / castStepSize()));
   castStage.style.setProperty('--cast-progress', progress);
   castIndex = Math.round(progress);
   castCopies.forEach((copy,i) => { const active=i===castIndex; copy.dataset.active=String(active); copy.inert=!active; copy.setAttribute('aria-hidden',String(!active)); });
@@ -240,7 +170,7 @@ function updateCastWheel() {
 }
 function jumpCast(index) {
   const target=Math.max(0,Math.min(castCopies.length-1,index));
-  const top=window.scrollY+castTrack.getBoundingClientRect().top+target*castStepSize();
+  const top=window.scrollY+castTrack.getBoundingClientRect().top-parseFloat(getComputedStyle(castStage).top)+target*castStepSize();
   window.scrollTo({top,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
 }
 window.addEventListener('scroll',()=> { cancelAnimationFrame(castFrame); castFrame=requestAnimationFrame(updateCastWheel); },{passive:true});
@@ -253,21 +183,13 @@ const extrasAlbums = {"poster": {"title": "Poster artwork", "items": [{"src": "a
 // Keep gallery state separate from navigation; new events can use the same record shape.
 extrasAlbums.teaser = {title:'Teaser', items:[{src:'assets/hero.png', alt:'Run Amok teaser', credit:'', source:''}]};
 extrasAlbums.bts = {title:'Behind the scenes', items:[]};
-const moreButton = document.querySelector('.bottom-nav [data-view="more"]');
-const collectionSelector = document.querySelector('.more-selector');
 const galleryStage = document.querySelector('.gallery-stage');
 const galleryImage = document.querySelector('.gallery-image');
 const galleryThumbs = document.querySelector('.gallery-thumbnails');
 let collection = 'sundance';
 let galleryIndex = 0;
-function setCollectionsOpen(open) {
-  collectionSelector.dataset.open = String(open);
-  collectionSelector.inert = !open;
-  collectionSelector.setAttribute('aria-hidden',String(!open));
-  moreButton.setAttribute('aria-expanded',String(open));
-}
 function renderGallery() {
-  extrasAlbums.poster.items[0].src = ['2', '2.2'].includes(hero.dataset.design) ? 'assets/poster1.png' : 'assets/poster2.png';
+  extrasAlbums.poster.items[0].src = 'assets/poster1.png';
   const album=extrasAlbums[collection], item=album.items[galleryIndex];
   galleryImage.hidden=!item;
   const empty=document.querySelector('.gallery-empty'); empty.hidden=!!item; empty.textContent='Behind-the-scenes photos coming soon.';
@@ -295,20 +217,37 @@ function moveGallery(direction) {
 document.querySelector('.gallery-prev').addEventListener('click',()=>moveGallery(-1));
 document.querySelector('.gallery-next').addEventListener('click',()=>moveGallery(1));
 galleryStage.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();moveGallery(event.key==='ArrowLeft'?-1:1);}});
-let galleryTouch=null;
-galleryStage.addEventListener('touchstart',event=>{galleryTouch=event.touches[0].clientX;},{passive:true});
-galleryStage.addEventListener('touchend',event=>{if(galleryTouch!==null){const distance=event.changedTouches[0].clientX-galleryTouch;if(Math.abs(distance)>45)moveGallery(distance<0?1:-1);}galleryTouch=null;},{passive:true});
-document.querySelectorAll('[data-collection]').forEach(button=>button.addEventListener('click',()=>{collection=button.dataset.collection;galleryIndex=0;renderGallery();setCollectionsOpen(false);galleryStage.focus({preventScroll:true});}));
-document.addEventListener('pointerdown',event=>{if(!event.target.closest('.more-selector')&&!event.target.closest('[data-view="more"]'))setCollectionsOpen(false);});
-document.addEventListener('keydown',event=>{if(event.key==='Escape'&&collectionSelector.dataset.open === 'true'){setCollectionsOpen(false);moreButton.focus();}});
+
+let galleryTouch = null;
+galleryStage.addEventListener('touchstart', event => {
+  galleryTouch = {x:event.touches[0].clientX,y:event.touches[0].clientY};
+},{passive:true});
+galleryStage.addEventListener('touchend', event => {
+  if (galleryTouch) {
+    const dx=event.changedTouches[0].clientX-galleryTouch.x,dy=event.changedTouches[0].clientY-galleryTouch.y;
+    if (Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)) moveGallery(dx<0?1:-1);
+  }
+  galleryTouch=null;
+},{passive:true});
+galleryStage.addEventListener('touchcancel',()=>galleryTouch=null,{passive:true});
+document.querySelectorAll('[data-collection]').forEach(button=>button.addEventListener('click',()=>{
+  collection=button.dataset.collection;galleryIndex=0;renderGallery();
+}));
 renderGallery();
 
-// Load the 3D library only when the visitor selects Design 1.2.
-let bulletLoading = false;
-function ensureBullet() {
-  if (!['1.2', '2.2'].includes(hero.dataset.design) || bulletLoading) return;
-  bulletLoading = true;
-  import('./bullet.js').then(module => module.mountBullet(hero, document.querySelector('.bullet-canvas')))
-    .catch(() => { hero.dataset.bulletRenderer = 'fallback'; });
+let navigationFrame=0;
+window.addEventListener('scroll',()=>{
+  cancelAnimationFrame(navigationFrame);
+  navigationFrame=requestAnimationFrame(updateNavigation);
+},{passive:true});
+window.addEventListener('resize',updateNavigation);
+window.addEventListener('pageshow',()=>{updateNavigation();updateCastWheel();});
+updateNavigation();updateCastWheel();
+if ('IntersectionObserver' in window && !reducedMotion.matches) {
+  const quoteObserver = new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting) { entry.target.dataset.visible='true'; quoteObserver.unobserve(entry.target); }
+    });
+  },{threshold:.12});
+  document.querySelectorAll('.press-quote').forEach(quote=>{quote.dataset.animate='true';quoteObserver.observe(quote);});
 }
-designButtons.forEach(button => button.addEventListener('click', ensureBullet));
