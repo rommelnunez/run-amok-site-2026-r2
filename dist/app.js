@@ -4,10 +4,15 @@ const bar = document.querySelector('.bottom-nav');
 const navLinks = [...bar.querySelectorAll('a[href^="#"]')];
 const sections = [...document.querySelectorAll('main > section')];
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const compactNavigation = matchMedia('(max-width: 960px)');
+const bottomLinks = bar.querySelector('.bottom-links');
 function setMenuOpen(open) {
   menu.setAttribute('aria-expanded', String(open));
   bar.dataset.open = String(open);
+  bottomLinks.inert = compactNavigation.matches && !open;
 }
+compactNavigation.addEventListener('change', () => setMenuOpen(false));
+setMenuOpen(false);
 menu.addEventListener('click', () => setMenuOpen(bar.dataset.open !== 'true'));
 document.addEventListener('pointerdown', event => { if (!bar.contains(event.target)) setMenuOpen(false); });
 document.addEventListener('keydown', event => {
@@ -25,13 +30,18 @@ document.querySelectorAll('a[href^="#"]').forEach(link => link.addEventListener(
   const top = Math.max(0, scrollY + target.getBoundingClientRect().top - headerHeight);
   if (location.hash !== link.hash) history.pushState(null, '', link.hash);
   target.focus({preventScroll:true});
+  if (target.id === 'cast') snapCast = true;
   window.scrollTo({top, behavior: reducedMotion.matches || target.id === 'cast' ? 'instant' : 'smooth'});
 }));
-function updateNavigation() {
+function readCurrentSection() {
   let current = 'home';
   const threshold = innerHeight * .35;
   for (const section of sections) if (section.getBoundingClientRect().top <= threshold) current = section.id;
   if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) current = sections.at(-1).id;
+  return current;
+}
+function updateNavigation(current) {
+  if (document.body.dataset.section === current) return;
   document.body.dataset.section = current;
   navLinks.forEach(link => {
     if (link.hash === '#'+current) link.setAttribute('aria-current','location');
@@ -42,24 +52,42 @@ const revealTrigger = document.querySelector('.reveal-trigger');
 const trailerControls = document.querySelector('.trailer-controls');
 const trailerClose = document.querySelector('.trailer-close');
 const siteBrand = document.querySelector('.site-brand');
+const trailerReveal = document.querySelector('.trailer-reveal');
+const hoverPointer = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 701px)');
 let pointerFrame = 0;
-function canReveal() { return hero.dataset.reveal !== 'open'; }
+let pointerPosition = null;
+let pointerTarget = null;
+let pointerTime = 0;
+let portalFrame = 0;
+let closeTimer = 0;
+function canReveal() { return !['opening', 'open', 'closing'].includes(hero.dataset.reveal); }
 function cancelRevealHover() {
   cancelAnimationFrame(pointerFrame);
+  pointerFrame = 0;
+  pointerPosition = pointerTarget = null;
   if (canReveal()) hero.dataset.reveal = '';
 }
+function followPointer(time) {
+  pointerFrame = 0;
+  if (!canReveal() || !pointerTarget) return;
+  const blend = 1 - Math.exp(-Math.min(time - pointerTime || 16, 48) / 55);
+  pointerTime = time;
+  pointerPosition.x += (pointerTarget.x - pointerPosition.x) * blend;
+  pointerPosition.y += (pointerTarget.y - pointerPosition.y) * blend;
+  const moving = Math.hypot(pointerTarget.x - pointerPosition.x, pointerTarget.y - pointerPosition.y) > .15;
+  if (!moving) pointerPosition = {...pointerTarget};
+  hero.style.setProperty('--pointer-x', `${pointerPosition.x}px`);
+  hero.style.setProperty('--pointer-y', `${pointerPosition.y}px`);
+  if (hero.dataset.reveal !== 'hover') hero.dataset.reveal = 'hover';
+  if (moving) pointerFrame = requestAnimationFrame(followPointer);
+}
 hero.addEventListener('pointermove', event => {
-  if (!canReveal() || event.pointerType === 'touch' || matchMedia('(max-width:700px)').matches) return;
+  if (!canReveal() || event.pointerType === 'touch' || !hoverPointer.matches || reducedMotion.matches) return;
   if (event.target.closest('a')) { cancelRevealHover(); return; }
-  cancelAnimationFrame(pointerFrame);
-  const {clientX,clientY} = event;
-  pointerFrame = requestAnimationFrame(() => {
-    if (!canReveal()) return;
-    const bounds = hero.getBoundingClientRect();
-    hero.style.setProperty('--pointer-x', `${clientX-bounds.left}px`);
-    hero.style.setProperty('--pointer-y', `${clientY-bounds.top}px`);
-    hero.dataset.reveal = 'hover';
-  });
+  const bounds = hero.getBoundingClientRect();
+  pointerTarget = {x: event.clientX - bounds.left, y: event.clientY - bounds.top};
+  if (!pointerPosition) { pointerPosition = {...pointerTarget}; pointerTime = performance.now(); }
+  if (!pointerFrame) pointerFrame = requestAnimationFrame(followPointer);
 });
 hero.addEventListener('pointerleave',cancelRevealHover);
 window.addEventListener('resize',()=>{
@@ -69,28 +97,48 @@ window.addEventListener('resize',()=>{
   cancelRevealHover();
 });
 bar.addEventListener('pointerenter',cancelRevealHover);
-function closeTrailer(restoreFocus=true) {
+function finishClosingTrailer() {
+  if (hero.dataset.reveal !== 'closing') return;
+  clearTimeout(closeTimer);
   hero.dataset.reveal = '';
   trailerControls.hidden = true;
   trailerControls.removeAttribute('aria-modal');
   bar.inert = siteBrand.inert = false;
   sections.filter(section=>section!==hero).forEach(section=>section.inert=false);
-  if (restoreFocus) revealTrigger.focus({preventScroll:true});
+  revealTrigger.focus({preventScroll:true});
 }
+function closeTrailer() {
+  if (canReveal() || hero.dataset.reveal === 'closing') return;
+  const wasOpening = hero.dataset.reveal === 'opening';
+  cancelAnimationFrame(portalFrame);
+  hero.dataset.reveal = 'closing';
+  if (reducedMotion.matches || wasOpening) finishClosingTrailer();
+  else closeTimer = setTimeout(finishClosingTrailer, 700);
+}
+trailerReveal.addEventListener('transitionend', event => {
+  if (event.target === trailerReveal && event.propertyName === 'clip-path') finishClosingTrailer();
+});
 revealTrigger.addEventListener('click', () => {
   if (!canReveal()) return;
   cancelAnimationFrame(pointerFrame);
-  hero.dataset.reveal = 'open';
+  pointerFrame = 0;
+  const origin = revealTrigger.getBoundingClientRect();
+  hero.style.setProperty('--portal-x', `${origin.left + origin.width / 2}px`);
+  hero.style.setProperty('--portal-y', `${origin.top + origin.height / 2}px`);
+  hero.dataset.reveal = reducedMotion.matches ? 'open' : 'opening';
   trailerControls.hidden = false;
   trailerControls.setAttribute('role','dialog');
   trailerControls.setAttribute('aria-modal','true');
   bar.inert = siteBrand.inert = true;
   sections.filter(section=>section!==hero).forEach(section=>section.inert=true);
   trailerClose.focus({preventScroll:true});
+  if (!reducedMotion.matches) portalFrame = requestAnimationFrame(() => {
+    portalFrame = requestAnimationFrame(() => { if (hero.dataset.reveal === 'opening') hero.dataset.reveal = 'open'; });
+  });
 });
 trailerClose.addEventListener('click',()=>closeTrailer());
 document.addEventListener('keydown',event=>{
-  if (hero.dataset.reveal !== 'open') return;
+  if (canReveal()) return;
   if (event.key === 'Escape') closeTrailer();
   if (event.key === 'Tab') { event.preventDefault(); trailerClose.focus(); }
 });
@@ -166,24 +214,48 @@ const castTrack = document.querySelector('.cast-scroll-track');
 const castStage = document.querySelector('.cast-stage');
 const castCopies = [...document.querySelectorAll('.cast-copy')];
 const castPortraits = [...document.querySelectorAll('.cast-portrait')];
-let castIndex = 0;
-let castFrame = 0;
+let castIndex = -1;
+let castProgress = 0;
+let castTarget = 0;
+let snapCast = true;
+let castOnscreen = false;
 function castStepSize() { return (castTrack.offsetHeight - castStage.offsetHeight) / (castCopies.length - 1); }
-function updateCastWheel() {
-  const progress = Math.max(0,Math.min(castCopies.length-1,(parseFloat(getComputedStyle(castStage).top) - castTrack.getBoundingClientRect().top) / castStepSize()));
-  castStage.style.setProperty('--cast-progress', progress);
-  castIndex = Math.round(progress);
-  castCopies.forEach((copy,i) => { const active=i===castIndex; copy.dataset.active=String(active); copy.inert=!active; copy.setAttribute('aria-hidden',String(!active)); });
-  castPortraits.forEach((portrait,i) => { portrait.dataset.distant=String(Math.abs(i-progress)>1.8); portrait.dataset.current=String(i===castIndex); });
+function readCastProgress() {
+  const bounds = castTrack.getBoundingClientRect();
+  castOnscreen = bounds.top < innerHeight && bounds.bottom > 0;
+  return Math.max(0,Math.min(castCopies.length-1,(parseFloat(getComputedStyle(castStage).top) - bounds.top) / Math.max(1,castStepSize())));
+}
+function updateCastWheel(progress) {
+  castStage.style.setProperty('--cast-progress', progress.toFixed(4));
+  const nextIndex = Math.round(progress);
+  if (nextIndex !== castIndex) {
+    const moveFocus = castPortraits.includes(document.activeElement);
+    castIndex = nextIndex;
+    castCopies.forEach((copy,i) => { const active=i===castIndex; copy.dataset.active=String(active); copy.inert=!active; copy.setAttribute('aria-hidden',String(!active)); });
+    castPortraits.forEach((portrait,i) => {
+      portrait.dataset.current=String(i===castIndex);
+      portrait.tabIndex=i===castIndex ? 0 : -1;
+      portrait.setAttribute('aria-pressed',String(i===castIndex));
+    });
+    if (moveFocus) castPortraits[castIndex].focus({preventScroll:true});
+  }
+  castPortraits.forEach((portrait,i) => {
+    const distant=String(Math.abs(i-progress)>1.8);
+    if (portrait.dataset.distant !== distant) portrait.dataset.distant=distant;
+  });
 }
 function jumpCast(index) {
   const target=Math.max(0,Math.min(castCopies.length-1,index));
   const top=window.scrollY+castTrack.getBoundingClientRect().top-parseFloat(getComputedStyle(castStage).top)+target*castStepSize();
-  window.scrollTo({top,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+  window.scrollTo({top,behavior:reducedMotion.matches?'instant':'smooth'});
 }
-window.addEventListener('scroll',()=> { cancelAnimationFrame(castFrame); castFrame=requestAnimationFrame(updateCastWheel); },{passive:true});
-window.addEventListener('resize',updateCastWheel);
 castPortraits.forEach((portrait,i)=>portrait.addEventListener('click',()=>jumpCast(i)));
+castStage.addEventListener('keydown', event => {
+  if (!event.target.closest('.cast-portrait') || !['ArrowDown','ArrowUp','ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+  event.preventDefault();
+  const next = event.key === 'Home' ? 0 : event.key === 'End' ? castCopies.length - 1 : castIndex + (['ArrowDown','ArrowRight'].includes(event.key) ? 1 : -1);
+  jumpCast(next);
+});
 
 // Gallery records: add event albums here when event photography is supplied.
 const extrasAlbums = {"poster": {"title": "Poster artwork", "items": [{"src": "assets/poster-artwork.png", "alt": "Run Amok poster artwork", "credit": "", "source": ""}]}, "sundance": {"title": "Sundance, 2026", "items": [{"src": "assets/portraits/alyssa-marvin-web.jpg", "alt": "Alyssa Marvin at Sundance 2026", "credit": "CaseyJNewell / WikiPortraits / CC BY-SA 4.0", "source": "https://commons.wikimedia.org/wiki/File:Alyssa_Marvin_at_Sundance_Film_Festival_2026-1.jpg"}, {"src": "assets/portraits/patrick-wilson-web.jpg", "alt": "Patrick Wilson at Sundance 2026", "credit": "CaseyJNewell / WikiPortraits / CC BY-SA 4.0", "source": "https://commons.wikimedia.org/wiki/File:Patrick_Wilson_at_Sundance_Film_Festival_2026-3_%28cropped%29.jpg"}, {"src": "assets/portraits/margaret-cho-web.jpg", "alt": "Margaret Cho at Sundance 2026", "credit": "CaseyJNewell / WikiPortraits / CC BY-SA 4.0", "source": "https://commons.wikimedia.org/wiki/File:Margaret_Cho_at_Sundance_Film_Festival_2026-2_%28cropped%29.jpg"}, {"src": "assets/portraits/sophia-torres-web.jpg", "alt": "Sophia Torres at Sundance 2026", "credit": "CaseyJNewell / WikiPortraits / CC BY-SA 4.0", "source": "https://commons.wikimedia.org/wiki/File:Sophia_Torres_at_Sundance_Film_Festival_2026-6.jpg"}, {"src": "assets/portraits/molly-ringwald-web.jpg", "alt": "Molly Ringwald at Sundance 2026", "credit": "CaseyJNewell / WikiPortraits / CC BY-SA 4.0", "source": "https://commons.wikimedia.org/wiki/File:Molly_Ringwald_at_Sundance_Film_Festival_2026-1.jpg"}, {"src": "assets/portraits/julie-christeas-web.jpg", "alt": "Julie Christeas at Sundance 2026", "credit": "CaseyJNewell / WikiPortraits / CC BY-SA 4.0", "source": "https://commons.wikimedia.org/wiki/File:Julie_Christeas_at_Sundance_Film_Festival_2026-1.jpg"}]}};
@@ -191,39 +263,161 @@ const extrasAlbums = {"poster": {"title": "Poster artwork", "items": [{"src": "a
 // Keep gallery state separate from navigation; new events can use the same record shape.
 extrasAlbums.teaser = {title:'Teaser', items:[{src:'assets/hero.png', alt:'Run Amok teaser', credit:'', source:''}]};
 extrasAlbums.bts = {title:'Behind the scenes', items:[]};
+extrasAlbums.poster.items[0].src = 'assets/poster1.png';
 const galleryStage = document.querySelector('.gallery-stage');
-const galleryImage = document.querySelector('.gallery-image');
+let galleryImage = document.querySelector('.gallery-image');
 const galleryThumbs = document.querySelector('.gallery-thumbnails');
+const galleryCaption = document.querySelector('.gallery-caption');
+const galleryEmpty = document.querySelector('.gallery-empty');
+const galleryVideoStatus = document.querySelector('.gallery-video-status');
+const galleryPrev = document.querySelector('.gallery-prev');
+const galleryNext = document.querySelector('.gallery-next');
+const galleryCollections = [...document.querySelectorAll('[data-collection]')];
+const galleryLoadStatus = document.createElement('p');
+galleryLoadStatus.className = 'gallery-load-status';
+galleryLoadStatus.setAttribute('role', 'status');
+galleryLoadStatus.hidden = true;
+galleryCaption.after(galleryLoadStatus);
 let collection = 'sundance';
 let galleryIndex = 0;
-function renderGallery() {
-  extrasAlbums.poster.items[0].src = 'assets/poster1.png';
-  const album=extrasAlbums[collection], item=album.items[galleryIndex];
-  galleryImage.hidden=!item;
-  const empty=document.querySelector('.gallery-empty'); empty.hidden=!!item; empty.textContent='Behind-the-scenes photos coming soon.';
-  document.querySelector('.gallery-video-status').hidden=collection!=='teaser';
-  const caption=document.querySelector('.gallery-caption');caption.replaceChildren();
-  if(item) {
-    galleryImage.classList.remove('is-changing'); galleryImage.src=item.src;galleryImage.alt=item.alt;
-    void galleryImage.offsetWidth; galleryImage.classList.add('is-changing');
-    if(collection==='sundance')caption.append(document.createTextNode(item.alt.replace(' at Sundance 2026','')));
-    if(item.source) { const link=document.createElement('a');link.href=item.source;link.target='_blank';link.rel='noopener';link.textContent=item.credit;caption.append(link); }
+let galleryThumbCollection = '';
+let galleryRequest = 0;
+let galleryPendingKey = '';
+let galleryShown = {collection: 'sundance', index: 0, key: ''};
+function updateGalleryControls() {
+  const album = extrasAlbums[collection];
+  // Keep the same thumbnail buttons while browsing an album, preserving focus.
+  if (galleryThumbCollection !== collection) {
+    galleryThumbs.replaceChildren();
+    album.items.forEach((photo, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('aria-label', photo.alt);
+      const img = document.createElement('img');
+      img.src = photo.src;
+      img.alt = '';
+      img.decoding = 'async';
+      button.append(img);
+      button.addEventListener('click', () => {
+        galleryIndex = index;
+        renderGallery();
+      });
+      galleryThumbs.append(button);
+    });
+    galleryThumbCollection = collection;
   }
-  galleryThumbs.replaceChildren();
-  album.items.forEach((photo,index)=>{
-    const button=document.createElement('button');button.type='button';button.setAttribute('aria-label',photo.alt);button.setAttribute('aria-pressed',String(index===galleryIndex));
-    const img=document.createElement('img');img.src=photo.src;img.alt='';button.append(img);
-    button.addEventListener('click',()=>{galleryIndex=index;renderGallery();galleryThumbs.children[index].focus({preventScroll:true});});galleryThumbs.append(button);
+  [...galleryThumbs.children].forEach((button, index) => button.setAttribute('aria-pressed', String(index === galleryIndex)));
+  galleryCollections.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.collection === collection)));
+  galleryPrev.hidden = galleryNext.hidden = album.items.length < 2;
+  galleryPrev.disabled = galleryIndex === 0;
+  galleryNext.disabled = galleryIndex >= album.items.length - 1;
+}
+function updateGalleryCaption(item, albumName) {
+  galleryCaption.replaceChildren();
+  if (!item) return;
+  if (albumName === 'sundance') galleryCaption.append(document.createTextNode(item.alt.replace(' at Sundance 2026', '')));
+  if (item.source) {
+    const link = document.createElement('a');
+    link.href = item.source;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = item.credit;
+    galleryCaption.append(link);
+  }
+}
+function removeGalleryOutgoing() {
+  galleryStage.querySelectorAll('.gallery-image--outgoing').forEach(image => image.remove());
+}
+async function decodeGalleryImage(item) {
+  const image = new Image();
+  image.className = 'gallery-image';
+  image.alt = item.alt;
+  image.decoding = 'async';
+  const loaded = new Promise((resolve, reject) => {
+    image.onload = resolve;
+    image.onerror = reject;
   });
-  document.querySelectorAll('[data-collection]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.collection===collection)));
-  const prev=document.querySelector('.gallery-prev'), next=document.querySelector('.gallery-next');
-  prev.hidden=next.hidden=album.items.length<2;prev.disabled=galleryIndex===0;next.disabled=galleryIndex===album.items.length-1;
+  image.src = item.src;
+  await loaded;
+  if (image.decode) await image.decode();
+  return image;
+}
+async function renderGallery() {
+  const albumName = collection;
+  const index = galleryIndex;
+  const item = extrasAlbums[albumName].items[index];
+  const key = `${albumName}:${index}`;
+  updateGalleryControls();
+  if (key === galleryPendingKey) return;
+  const request = ++galleryRequest;
+  galleryPendingKey = '';
+  galleryLoadStatus.hidden = true;
+  if (key === galleryShown.key) {
+    galleryStage.removeAttribute('aria-busy');
+    return;
+  }
+  if (!item) {
+    removeGalleryOutgoing();
+    galleryImage.hidden = true;
+    galleryEmpty.textContent = 'Behind-the-scenes photos coming soon.';
+    galleryEmpty.hidden = false;
+    galleryVideoStatus.hidden = true;
+    galleryStage.removeAttribute('aria-busy');
+    updateGalleryCaption(null, albumName);
+    galleryShown = {collection: albumName, index, key};
+    return;
+  }
+  galleryPendingKey = key;
+  galleryStage.setAttribute('aria-busy', 'true');
+  try {
+    const nextImage = await decodeGalleryImage(item);
+    // A slower image request must never replace a more recent selection.
+    if (request !== galleryRequest) return;
+    const alreadyVisible = !galleryImage.hidden && galleryImage.getAttribute('src') === item.src;
+    if (!alreadyVisible) {
+      removeGalleryOutgoing();
+      const previousImage = galleryImage;
+      if (!previousImage.hidden && previousImage.complete && previousImage.naturalWidth && !reducedMotion.matches) {
+        previousImage.className = 'gallery-image gallery-image--outgoing is-leaving';
+        previousImage.alt = '';
+        previousImage.setAttribute('aria-hidden', 'true');
+        previousImage.addEventListener('animationend', () => previousImage.remove(), {once: true});
+        nextImage.classList.add('is-entering');
+        nextImage.addEventListener('animationend', () => nextImage.classList.remove('is-entering'), {once: true});
+        galleryStage.insertBefore(nextImage, previousImage);
+      } else {
+        previousImage.replaceWith(nextImage);
+      }
+      galleryImage = nextImage;
+    }
+    galleryImage.hidden = false;
+    galleryEmpty.hidden = true;
+    galleryVideoStatus.hidden = albumName !== 'teaser';
+    updateGalleryCaption(item, albumName);
+    galleryShown = {collection: albumName, index, key};
+  } catch {
+    if (request !== galleryRequest) return;
+    // Keep the last usable image and its caption; the failed choice remains retryable.
+    collection = galleryShown.collection;
+    galleryIndex = galleryShown.index;
+    updateGalleryControls();
+    galleryLoadStatus.textContent = 'This image couldn’t load. Please try again.';
+    galleryLoadStatus.hidden = false;
+  } finally {
+    if (request === galleryRequest) {
+      galleryPendingKey = '';
+      galleryStage.removeAttribute('aria-busy');
+    }
+  }
 }
 function moveGallery(direction) {
-  galleryIndex=Math.max(0,Math.min(extrasAlbums[collection].items.length-1,galleryIndex+direction));renderGallery();
+  const next = Math.max(0, Math.min(extrasAlbums[collection].items.length - 1, galleryIndex + direction));
+  if (next === galleryIndex) return;
+  galleryIndex = next;
+  renderGallery();
 }
-document.querySelector('.gallery-prev').addEventListener('click',()=>moveGallery(-1));
-document.querySelector('.gallery-next').addEventListener('click',()=>moveGallery(1));
+galleryPrev.addEventListener('click',()=>moveGallery(-1));
+galleryNext.addEventListener('click',()=>moveGallery(1));
 galleryStage.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();moveGallery(event.key==='ArrowLeft'?-1:1);}});
 
 let galleryTouch = null;
@@ -238,19 +432,58 @@ galleryStage.addEventListener('touchend', event => {
   galleryTouch=null;
 },{passive:true});
 galleryStage.addEventListener('touchcancel',()=>galleryTouch=null,{passive:true});
-document.querySelectorAll('[data-collection]').forEach(button=>button.addEventListener('click',()=>{
+galleryCollections.forEach(button=>button.addEventListener('click',()=>{
   collection=button.dataset.collection;galleryIndex=0;renderGallery();
 }));
 renderGallery();
 
-let navigationFrame=0;
-window.addEventListener('scroll',()=>{
-  cancelAnimationFrame(navigationFrame);
-  navigationFrame=requestAnimationFrame(updateNavigation);
-},{passive:true});
-window.addEventListener('resize',updateNavigation);
-window.addEventListener('pageshow',()=>{updateNavigation();updateCastWheel();});
-updateNavigation();updateCastWheel();
+// One frame reads scroll geometry before changing state. Only the portrait
+// coordinate eases toward native scroll; document scrolling stays browser-owned.
+let scrollFrame=0;
+let scrollDirty=true;
+let scrollTime=0;
+function updateScroll(time) {
+  scrollFrame=0;
+  let current;
+  if (scrollDirty) {
+    current=readCurrentSection();
+    castTarget=readCastProgress();
+    scrollDirty=false;
+  }
+  const blend=1-Math.exp(-Math.min(time-scrollTime || 16,48)/65);
+  scrollTime=time;
+  const next = snapCast || reducedMotion.matches || !castOnscreen ? castTarget : castProgress+(castTarget-castProgress)*blend;
+  const settling=Math.abs(castTarget-next)>.0005;
+  const progress=settling ? next : castTarget;
+  if (current) updateNavigation(current);
+  if (progress!==castProgress || castIndex===-1) updateCastWheel(progress);
+  castProgress=progress;
+  snapCast=false;
+  if (settling) scrollFrame=requestAnimationFrame(updateScroll);
+}
+function scheduleScrollUpdate() {
+  scrollDirty=true;
+  if (!scrollFrame) scrollFrame=requestAnimationFrame(updateScroll);
+}
+window.addEventListener('scroll',scheduleScrollUpdate,{passive:true});
+window.addEventListener('resize',scheduleScrollUpdate);
+window.addEventListener('pageshow',()=>{snapCast=true;scheduleScrollUpdate();});
+// Disclosure and image/font loading can move later section anchors.
+if ('ResizeObserver' in window) new ResizeObserver(scheduleScrollUpdate).observe(document.querySelector('main'));
+reducedMotion.addEventListener('change',()=>{
+  cancelRevealHover();
+  hero.style.removeProperty('--pointer-x');
+  hero.style.removeProperty('--pointer-y');
+  if (reducedMotion.matches) {
+    removeGalleryOutgoing();
+    galleryImage.classList.remove('is-entering');
+    if (hero.dataset.reveal==='closing') finishClosingTrailer();
+    if (hero.dataset.reveal==='opening') hero.dataset.reveal='open';
+  }
+  snapCast=true;
+  scheduleScrollUpdate();
+});
+scheduleScrollUpdate();
 if ('IntersectionObserver' in window && !reducedMotion.matches) {
   const quoteObserver = new IntersectionObserver(entries=>{
     entries.forEach(entry=>{
