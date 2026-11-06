@@ -202,6 +202,9 @@ body[data-section]:not([data-section="home"]) .site-brand { opacity: 1; visibili
 .screening-filters select:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .screening-filters button { border: 1px solid #20201940; border-radius: 99px; padding: 0 16px; min-height: 42px; color: inherit; }
 .screening-filters button[aria-pressed="true"] { background: var(--ink); color: var(--color-yellow); }
+.screening-results-frame, .screening-size-guide { display: grid; align-items: start; }
+.screening-results-frame > *, .screening-size-guide > * { grid-area: 1 / 1; min-width: 0; }
+.screening-size-guide { visibility: hidden; pointer-events: none; user-select: none; }
 .screening-theater { padding: 24px 0; border-bottom: 1px solid #20201926; }
 .screening-theater h3 { font-size: 26px; font-weight: 400; margin: 0 0 4px; }
 .screening-theater .theater-location { font-size: 14px; margin: 0 0 14px; opacity: .7; }
@@ -209,12 +212,11 @@ body[data-section]:not([data-section="home"]) .site-brand { opacity: 1; visibili
 .showtime-chip { display: inline-flex; align-items: center; gap: 12px; padding: 12px 18px; border-radius: 14px; background: #2020190e; border: 1px solid #20201920; }
 .showtime-chip time { font-size: 23px; }
 .showtime-chip .screening-tag { font-size: 13px; letter-spacing: .04em; line-height: 1; color: #fff; background: var(--ink); border-radius: 5px; padding: 4px 6px; transform: translateY(1px); }
-.screening-empty { font-size: 15px; margin: 0; line-height: 1.5; }
+.screenings .screening-empty { font-size: 15px; margin: 0; line-height: 1.5; padding: 32px 0; text-align: center; }
 .screening-row .screening-tag { display: inline-block; font-size: 12px; border: 1px solid #20201940; padding: 2px 8px; border-radius: 99px; margin-left: 8px; }
 .screening-time { text-align: right; }
 .screening-time time { font-size: 20px; display: block; }
 .screening-time button { font-size: 12px; padding: 6px 0; color: inherit; opacity: .6; cursor: default; }
-.screening-empty { padding: 32px 0; text-align: center; }
 @media(max-width:600px) {
   .date-strip { gap: 4px; }
   .date-strip button { border-radius: 12px; }

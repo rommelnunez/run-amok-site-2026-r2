@@ -35,7 +35,7 @@ document.querySelectorAll('a[href^="#"]').forEach(link => link.addEventListener(
 }));
 function readCurrentSection() {
   let current = 'home';
-  const threshold = innerHeight * .35;
+  const threshold = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) + 1;
   for (const section of sections) if (section.getBoundingClientRect().top <= threshold) current = section.id;
   if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) current = sections.at(-1).id;
   return current;
@@ -178,17 +178,36 @@ function groupScreenings(items) {
   });
   return [...venues.values()].map(group => ({ ...group, shows: group.shows.sort((a,b) => showtimeMinutes(a.time) - showtimeMinutes(b.time)) }));
 }
+function screeningResultsMarkup(matches) {
+  return matches.length ? groupScreenings(matches).map(group => `<article class="screening-theater"><h3>${group.venue}</h3><p class="theater-location">${group.city}</p><ul class="showtime-list">${group.shows.map(item => `<li><span class="showtime-chip" title="Tickets not yet available"><time>${item.time.replace(/ (ET|PT|CT)$/, '').toLowerCase()}</time>${item.special ? '<span class="screening-tag">Q&amp;A</span>' : ''}</span></li>`).join('')}</ul></article>`).join('') : '<p class="screening-empty">No screenings found. Try another date or location.</p>';
+}
+// Intrinsic sizing keeps all dates/filters at the tallest day's natural height.
+// CSS lays these non-interactive guides over one another, including on mobile.
+const screeningSizeGuide = document.querySelector('.screening-size-guide');
+[...new Set(screeningData.map(item => item.day))].forEach(day => {
+  const guide = document.createElement('div');
+  guide.innerHTML = screeningResultsMarkup(screeningData.filter(item => item.day === day));
+  screeningSizeGuide.append(guide);
+});
+const screeningDates = document.querySelector('#screening-dates');
+let renderedScreeningWeek = -1;
 function renderScreenings() {
   const start = 6 + screeningWeek * 7;
-  document.querySelector('#screening-dates').innerHTML = Array.from({length:7}, (_,index) => {
-    const day = start + index;
-    const weekday = new Date(2026,10,day).toLocaleDateString('en-US',{weekday:'short'});
-    return `<button type="button" data-day="${day}" aria-pressed="${day===screeningDay}" aria-label="${weekday}, November ${day}, 2026"><span>${weekday}</span><strong>${day}</strong></button>`;
-  }).join('');
+  if (renderedScreeningWeek !== screeningWeek) {
+    screeningDates.innerHTML = Array.from({length:7}, (_,index) => {
+      const day = start + index;
+      const weekday = new Date(2026,10,day).toLocaleDateString('en-US',{weekday:'short'});
+      return `<button type="button" data-day="${day}" aria-pressed="false" aria-label="${weekday}, November ${day}, 2026"><span>${weekday}</span><strong>${day}</strong></button>`;
+    }).join('');
+    renderedScreeningWeek = screeningWeek;
+  }
+  screeningDates.querySelectorAll('button').forEach(button => {
+    button.setAttribute('aria-pressed', String(Number(button.dataset.day) === screeningDay));
+  });
   document.querySelector('#week-prev').disabled = screeningWeek === 0;
   document.querySelector('#week-next').disabled = screeningWeek === 1;
   const matches = screeningData.filter(item => item.day === screeningDay && (cityFilter.value === 'all' || item.city === cityFilter.value) && (!specialOnly || item.special));
-  document.querySelector('#screening-results').innerHTML = matches.length ? groupScreenings(matches).map(group => `<article class="screening-theater"><h3>${group.venue}</h3><p class="theater-location">${group.city}</p><ul class="showtime-list">${group.shows.map(item => `<li><span class="showtime-chip" title="Tickets not yet available"><time>${item.time.replace(/ (ET|PT|CT)$/, '').toLowerCase()}</time>${item.special ? '<span class="screening-tag">Q&amp;A</span>' : ''}</span></li>`).join('')}</ul></article>`).join('') : '<p class="screening-empty">No screenings found. Try another date or location.</p>';
+  document.querySelector('#screening-results').innerHTML = screeningResultsMarkup(matches);
 }
 document.querySelector('#screening-dates').addEventListener('click', event => {
   const button = event.target.closest('[data-day]');
