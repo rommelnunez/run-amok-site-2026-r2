@@ -65,9 +65,6 @@ body[data-section]:not([data-section="home"]) .site-brand { opacity: 1; visibili
 .logo-stack svg:nth-child(4) { color: #fa4c01; }
 .logo-stack svg:nth-child(5) { color: #f53f01; }
 .director-credit { margin: 12px -20px 0; text-align: center; font-size: clamp(18px,1.8vw,24px); }
-.scroll-cue { position: absolute; bottom: 132px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; min-height: 44px; text-decoration: none; z-index: 3; }
-.scroll-cue svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.5; transition: transform var(--motion-ui) var(--ease-out); }
-.scroll-cue:is(:hover,:focus-visible) svg { transform: translateY(4px); }
 .page-section { position: relative; padding: 80px 6% 120px; min-height: 85svh; scroll-margin-top: 0; }
 .screen-copy { width: min(100%,1080px); margin-inline: auto; text-align: center; }
 .screen-copy > h2, .section-title, .screenings-heading h2 { margin: 0 0 40px; font-weight: 400; font-size: clamp(40px,6vw,80px); line-height: 1.05; letter-spacing: -.035em; }
@@ -370,7 +367,7 @@ body:has(.hero:is([data-reveal="opening"],[data-reveal="open"],[data-reveal="clo
  .hero[data-reveal] .trailer-reveal, .hero[data-reveal] .trailer-controls, .site-brand, .press-quote[data-animate="true"] { transition: none; }
  .hero:not([data-reveal="open"]):not([data-reveal="opening"]):not([data-reveal="closing"]) .trailer-reveal { clip-path: circle(var(--reveal-radius) at var(--pointer-x) var(--pointer-y)); }
  .hero:not([data-reveal="open"]):not([data-reveal="opening"]):not([data-reveal="closing"]) .reveal-trigger { opacity: 1; }
- .site-brand, .scroll-cue:is(:hover,:focus-visible) svg { transform: none; }
+ .site-brand { transform: none; }
  .press-quote[data-animate="true"] { opacity: 1; }
  .gallery-image.is-entering, .gallery-image--outgoing.is-leaving { animation: none; }
 }
