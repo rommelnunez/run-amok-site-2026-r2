@@ -232,7 +232,7 @@ body[data-section]:not([data-section="home"]) .site-brand { opacity: 1; visibili
 .bottom-links { display: flex; align-items: center; gap: 4px; }
 .bottom-links a { white-space: nowrap; border-radius: var(--radius-pill); padding: 13px 17px; font-size: 17px; transition: background-color var(--motion-fast), color var(--motion-fast); }
 .bottom-links a:hover { background: #2020190b; }
-.bottom-links a[aria-current="location"] { background: var(--ink); color: var(--color-yellow); }
+.bottom-links a[aria-current="location"] { background: var(--ink); color: var(--color-accent); }
 .menu-toggle { display: none; border-radius: var(--radius-pill); }
 .menu-icon { width: 18px; height: 12px; position: relative; }
 .menu-icon::before, .menu-icon::after { content: ""; position: absolute; top: 2px; left: 0; width: 18px; border-top: 2px solid; transition: transform var(--motion-ui) var(--ease-out); }
