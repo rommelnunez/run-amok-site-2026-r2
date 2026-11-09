@@ -60,6 +60,8 @@ let pointerTarget = null;
 let pointerTime = 0;
 let portalFrame = 0;
 let closeTimer = 0;
+let revealDrag = null;
+let suppressRevealClick = false;
 function canReveal() { return !['opening', 'open', 'closing'].includes(hero.dataset.reveal); }
 function cancelRevealHover() {
   cancelAnimationFrame(pointerFrame);
@@ -82,14 +84,14 @@ function followPointer(time) {
   if (moving) pointerFrame = requestAnimationFrame(followPointer);
 }
 hero.addEventListener('pointermove', event => {
-  if (!canReveal() || event.pointerType === 'touch' || !hoverPointer.matches || reducedMotion.matches) return;
+  if (revealDrag || !canReveal() || event.pointerType === 'touch' || !hoverPointer.matches || reducedMotion.matches) return;
   if (event.target.closest('a')) { cancelRevealHover(); return; }
   const bounds = hero.getBoundingClientRect();
   pointerTarget = {x: event.clientX - bounds.left, y: event.clientY - bounds.top};
   if (!pointerPosition) { pointerPosition = {...pointerTarget}; pointerTime = performance.now(); }
   if (!pointerFrame) pointerFrame = requestAnimationFrame(followPointer);
 });
-hero.addEventListener('pointerleave',cancelRevealHover);
+hero.addEventListener('pointerleave',()=>{ if (!revealDrag) cancelRevealHover(); });
 window.addEventListener('resize',()=>{
   if (!canReveal()) return;
   hero.style.removeProperty('--pointer-x');
@@ -118,7 +120,52 @@ function closeTrailer() {
 trailerReveal.addEventListener('transitionend', event => {
   if (event.target === trailerReveal && event.propertyName === 'clip-path') finishClosingTrailer();
 });
-revealTrigger.addEventListener('click', () => {
+// Capture only gestures that begin on the circle; the rest of the page scrolls normally.
+revealTrigger.addEventListener('pointerdown', event => {
+  if (!canReveal() || !event.isPrimary || event.button !== 0) return;
+  if (event.pointerType === 'mouse' && hoverPointer.matches) return;
+  suppressRevealClick = false;
+  cancelRevealHover();
+  const bounds = hero.getBoundingClientRect();
+  const target = revealTrigger.getBoundingClientRect();
+  revealDrag = {id:event.pointerId, startX:event.clientX, startY:event.clientY,
+    x:target.left + target.width / 2 - bounds.left,
+    y:target.top + target.height / 2 - bounds.top, moved:false};
+  revealTrigger.setPointerCapture(event.pointerId);
+});
+revealTrigger.addEventListener('pointermove', event => {
+  if (!revealDrag || event.pointerId !== revealDrag.id) return;
+  const dx = event.clientX - revealDrag.startX, dy = event.clientY - revealDrag.startY;
+  if (!revealDrag.moved && Math.hypot(dx,dy) < 8) return;
+  revealDrag.moved = true;
+  hero.dataset.dragging = 'true';
+  const bounds = hero.getBoundingClientRect();
+  const radius = revealTrigger.getBoundingClientRect().width / 2;
+  const x = Math.max(radius,Math.min(bounds.width-radius,revealDrag.x+dx));
+  const y = Math.max(radius,Math.min(bounds.height-radius,revealDrag.y+dy));
+  hero.style.setProperty('--pointer-x', `${x}px`);
+  hero.style.setProperty('--pointer-y', `${y}px`);
+});
+function endRevealDrag(event) {
+  if (!revealDrag || (event && event.pointerId !== revealDrag.id)) return;
+  const {id,moved} = revealDrag;
+  suppressRevealClick = moved || event?.type === 'pointercancel';
+  revealDrag = null;
+  delete hero.dataset.dragging;
+  if (revealTrigger.hasPointerCapture(id)) revealTrigger.releasePointerCapture(id);
+}
+revealTrigger.addEventListener('pointerup',endRevealDrag);
+revealTrigger.addEventListener('pointercancel',endRevealDrag);
+revealTrigger.addEventListener('lostpointercapture',endRevealDrag);
+window.addEventListener('resize',()=>endRevealDrag());
+revealTrigger.addEventListener('dragstart',event=>event.preventDefault());
+revealTrigger.addEventListener('click', event => {
+  if (suppressRevealClick && event.detail !== 0) {
+    suppressRevealClick = false;
+    event.preventDefault();
+    return;
+  }
+  suppressRevealClick = false;
   if (!canReveal()) return;
   cancelAnimationFrame(pointerFrame);
   pointerFrame = 0;
@@ -142,7 +189,7 @@ document.addEventListener('keydown',event=>{
   if (event.key === 'Escape') closeTrailer();
   if (event.key === 'Tab') { event.preventDefault(); trailerClose.focus(); }
 });
-// Touch users tap to open; swiping vertically over the portal still scrolls the page.
+// Tap opens the trailer; dragging the circle repositions it without opening it.
 // Deliberately fictional screening data; replace this array when bookings are confirmed.
 const screeningData = [
   { day: 6, city: 'New York', venue: 'Downtown Cinema', time: '10:45 AM ET', special: false },
