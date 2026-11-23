@@ -12,6 +12,7 @@ const portraits = [
 const photos = [
   {src:'assets/bts/on-set-7758.jpg', description:'On the set of Run Amok'},
   {src:'assets/bts/on-set-7817.jpg', description:'Another moment on set'},
+  {src:'assets/bts/BTS_IMG_0311.jpg', description:'Cast and crew together at Sundance 2026'},
   ...portraits.map(([slug, name]) => ({
     src: `assets/bts/${slug}.jpg`,
     portrait: true,
@@ -21,7 +22,7 @@ const photos = [
 const spread = [
   [0, 0, .085], [-.13, .06, -.23], [.18, .105, .21],
   [.16, -.035, -.19], [-.20, -.1, .29], [-.04, .10, -.28],
-  [-.17, .08, .10], [.075, -.13, -.05],
+  [-.17, .08, .10], [.075, -.13, -.05], [-.12, -.05, .19],
 ];
 
 export function mountPhotoStack(figure, reducedMotion) {

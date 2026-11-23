@@ -2,7 +2,7 @@ const hero = document.querySelector('.hero');
 const menu = document.querySelector('.menu-toggle');
 const bar = document.querySelector('.bottom-nav');
 const navLinks = [...bar.querySelectorAll('a[href^="#"]')];
-const sections = [...document.querySelectorAll('main > section')];
+const sections = [...document.querySelectorAll('main > section:not([hidden])')];
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const compactNavigation = matchMedia('(max-width: 960px)');
 const bottomLinks = bar.querySelector('.bottom-links');
@@ -18,33 +18,31 @@ document.addEventListener('pointerdown', event => { if (!bar.contains(event.targ
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && bar.dataset.open === 'true') { setMenuOpen(false); menu.focus(); }
 });
-// Keep anchors in browser history and account for the fixed header.
+// Keep anchors in browser history and scroll directly to each section.
 document.querySelectorAll('a[href^="#"]').forEach(link => link.addEventListener('click', event => {
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   const id = link.hash.slice(1);
-  const target = document.getElementById(id === 'notify' ? 'more' : id);
+  const target = document.getElementById(id);
   if (!target) return;
   event.preventDefault();
   setMenuOpen(false);
-  const headerHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height'));
-  const top = Math.max(0, scrollY + target.getBoundingClientRect().top - headerHeight);
+  const top = Math.max(0, scrollY + target.getBoundingClientRect().top);
   if (location.hash !== link.hash) history.pushState(null, '', link.hash);
   if (id === 'notify') {
     setEnvelopeMode('address');
     centerEnvelope();
     return;
   }
-  if (id === 'more') setEnvelopeMode('photos', false);
+  if (id === 'more') setEnvelopeMode('closed', false);
   target.focus({preventScroll:true});
   window.scrollTo({top, behavior: reducedMotion.matches ? 'instant' : 'smooth'});
 }));
 function readCurrentSection() {
   let current = 'home';
-  const threshold = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) + 55;
+  const threshold = 55;
   for (const section of sections) if (section.getBoundingClientRect().top <= threshold) current = section.id;
   if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) current = sections.at(-1).id;
   if (current === 'film') return 'cast';
-  if (current === 'more' && btsStage.dataset.mode !== 'photos') return 'notify';
   return current;
 }
 function updateNavigation(current) {
@@ -58,7 +56,6 @@ function updateNavigation(current) {
 const revealTrigger = document.querySelector('.reveal-trigger');
 const trailerControls = document.querySelector('.trailer-controls');
 const trailerClose = document.querySelector('.trailer-close');
-const siteBrand = document.querySelector('.site-brand');
 const trailerReveal = document.querySelector('.trailer-reveal');
 const hoverPointer = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 701px)');
 let pointerFrame = 0;
@@ -112,7 +109,7 @@ function finishClosingTrailer() {
   hero.dataset.reveal = '';
   trailerControls.hidden = true;
   trailerControls.removeAttribute('aria-modal');
-  bar.inert = siteBrand.inert = false;
+  bar.inert = false;
   sections.filter(section=>section!==hero).forEach(section=>section.inert=false);
   revealTrigger.focus({preventScroll:true});
 }
@@ -183,7 +180,7 @@ revealTrigger.addEventListener('click', event => {
   trailerControls.hidden = false;
   trailerControls.setAttribute('role','dialog');
   trailerControls.setAttribute('aria-modal','true');
-  bar.inert = siteBrand.inert = true;
+  bar.inert = true;
   sections.filter(section=>section!==hero).forEach(section=>section.inert=true);
   trailerClose.focus({preventScroll:true});
   if (!reducedMotion.matches) portalFrame = requestAnimationFrame(() => {
@@ -321,102 +318,42 @@ castRow.addEventListener('click', event => {
 });
 castRow.addEventListener('dragstart', event => event.preventDefault());
 
-// Duplicate visual cards to close the loop without reading the reviews twice.
-const pressWindow = document.querySelector('#press-reviews');
-const pressTrack = pressWindow.querySelector('.press-track');
-const reviews = [...pressTrack.children];
-const pressCopies = reviews.map(review => {
-  const copy = review.cloneNode(true);
-  copy.setAttribute('aria-hidden', 'true');
-  copy.inert = true;
-  pressTrack.append(copy);
-  return copy;
-});
-let pressVisible = false;
-let pressHovered = false;
-let pressTouching = false;
-let pressTouchTimer;
-let pressFrame = 0;
-let pressTime = 0;
-let pressPosition = 0;
-let pressLastWrite = 0;
-function pressLoopWidth() { return pressCopies[0].offsetLeft - reviews[0].offsetLeft; }
-function animatePress(time) {
-  pressFrame = 0;
-  if (reducedMotion.matches || !pressVisible || pressHovered || pressTouching || pressWindow.matches(':focus-within') || document.hidden) {
-    pressTime = 0;
-    return;
-  }
-  if (Math.abs(pressWindow.scrollLeft - pressLastWrite) > 1) pressPosition = pressWindow.scrollLeft;
-  pressPosition = (pressPosition + Math.min(time - (pressTime || time), 40) * .038) % pressLoopWidth();
-  pressTime = time;
-  pressWindow.scrollLeft = pressPosition;
-  pressLastWrite = pressWindow.scrollLeft;
-  pressFrame = requestAnimationFrame(animatePress);
-}
-function schedulePress() {
-  if (!pressFrame) pressFrame = requestAnimationFrame(animatePress);
-}
-new IntersectionObserver(([entry]) => {
-  pressVisible = entry.isIntersecting;
-  schedulePress();
-}).observe(pressWindow);
-pressWindow.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') pressHovered = true; });
-pressWindow.addEventListener('pointerleave', () => { pressHovered = false; schedulePress(); });
-pressWindow.addEventListener('focusout', schedulePress);
-pressWindow.addEventListener('touchstart', () => {
-  clearTimeout(pressTouchTimer);
-  pressTouching = true;
-}, {passive:true});
-function resumePressAfterTouch(event) {
-  if (event.touches.length) return;
-  pressTouchTimer = setTimeout(() => {
-    pressTouching = false;
-    schedulePress();
-  }, 1500);
-}
-pressWindow.addEventListener('touchend', resumePressAfterTouch, {passive:true});
-pressWindow.addEventListener('touchcancel', resumePressAfterTouch, {passive:true});
-document.addEventListener('visibilitychange', schedulePress);
-
-const btsStage = document.querySelector('.bts-stage');
 const photoStack = document.querySelector('.photo-stack');
-const envelope = document.querySelector('#notify');
+const notifySection = document.querySelector('.notify-section');
+const envelope = notifySection.querySelector('.envelope');
 const openEnvelope = document.querySelector('#envelope-open');
 const closeEnvelope = document.querySelector('#envelope-close');
 const newsletterForm = document.querySelector('#newsletter-form');
 const newsletterEmail = document.querySelector('#newsletter-email');
 const newsletterStatus = document.querySelector('#newsletter-status');
 function setEnvelopeMode(mode, focus = true) {
-  btsStage.dataset.mode = mode;
-  const showingPhotos = mode === 'photos';
-  photoStack.inert = !showingPhotos;
-  openEnvelope.hidden = !showingPhotos;
-  openEnvelope.setAttribute('aria-expanded', String(!showingPhotos));
-  closeEnvelope.hidden = showingPhotos;
+  notifySection.dataset.mode = mode;
+  const isClosed = mode === 'closed';
+  openEnvelope.hidden = !isClosed;
+  openEnvelope.setAttribute('aria-expanded', String(!isClosed));
+  closeEnvelope.hidden = isClosed;
   newsletterForm.hidden = mode !== 'address';
   if (mode !== 'sent') newsletterStatus.replaceChildren();
   if (focus) {
     if (mode === 'address') newsletterEmail.focus({preventScroll:true});
-    else if (showingPhotos) openEnvelope.focus({preventScroll:true});
+    else if (isClosed) openEnvelope.focus({preventScroll:true});
     else closeEnvelope.focus({preventScroll:true});
   }
   scheduleScrollUpdate();
 }
 function centerEnvelope(behavior = reducedMotion.matches ? 'instant' : 'smooth') {
-  const stage = btsStage.getBoundingClientRect();
-  window.scrollTo({top: scrollY + stage.top + stage.height * .49 - innerHeight * .49, behavior});
+  const card = envelope.getBoundingClientRect();
+  window.scrollTo({top: scrollY + card.top + card.height * .5 - innerHeight * .5, behavior});
 }
 openEnvelope.addEventListener('click', () => {
   setEnvelopeMode('address');
   centerEnvelope();
 });
 closeEnvelope.addEventListener('click', () => {
-  if (location.hash === '#notify') history.replaceState(null, '', '#more');
-  setEnvelopeMode('photos');
+  setEnvelopeMode('closed');
 });
 envelope.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && btsStage.dataset.mode !== 'photos') closeEnvelope.click();
+  if (event.key === 'Escape' && notifySection.dataset.mode !== 'closed') closeEnvelope.click();
 });
 newsletterForm.addEventListener('submit', event => {
   event.preventDefault();
@@ -431,9 +368,9 @@ newsletterForm.addEventListener('submit', event => {
 });
 function restoreEnvelopeFromHash() {
   if (location.hash === '#notify') {
-    if (btsStage.dataset.mode === 'photos') setEnvelopeMode('address', false);
+    if (notifySection.dataset.mode === 'closed') setEnvelopeMode('address', false);
     centerEnvelope('instant');
-  } else if (location.hash === '#more') setEnvelopeMode('photos', false);
+  } else if (location.hash === '#more') setEnvelopeMode('closed', false);
 }
 window.addEventListener('hashchange', restoreEnvelopeFromHash);
 if (location.hash === '#notify') requestAnimationFrame(restoreEnvelopeFromHash);
@@ -442,7 +379,7 @@ if (location.hash === '#notify') requestAnimationFrame(restoreEnvelopeFromHash);
 const photoObserver = new IntersectionObserver(([entry]) => {
   if (!entry.isIntersecting) return;
   photoObserver.disconnect();
-  import('./photo-stack.js?v=r2-film-layout-1')
+  import('./photo-stack.js?v=r2-press-layout-2')
     .then(({mountPhotoStack}) => mountPhotoStack(photoStack, reducedMotion))
     .catch(error => console.error('Photo stack could not load.', error));
 }, {rootMargin:'700px'});
@@ -468,7 +405,6 @@ reducedMotion.addEventListener('change', () => {
     if (hero.dataset.reveal === 'closing') finishClosingTrailer();
     if (hero.dataset.reveal === 'opening') hero.dataset.reveal = 'open';
   }
-  schedulePress();
   scheduleScrollUpdate();
 });
 scheduleScrollUpdate();
