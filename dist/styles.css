@@ -273,12 +273,12 @@ body:has(.hero:is([data-reveal="opening"],[data-reveal="open"],[data-reveal="clo
 .cast-person button:focus-visible .cast-person-name,
 .cast-person button[aria-pressed="true"] .cast-person-name { opacity: 1; transform: translate(-50%, 0); }
 .cast-person button:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
-.cast-person--alyssa { left: 30.73%; top: 28.04%; width: 6.25%; height: 48.60%; }
-.cast-person--sophia { left: 59.64%; top: 26.17%; width: 7.30%; height: 40.19%; }
-.cast-person--molly { left: 35.94%; top: 22.43%; width: 6.77%; height: 56.07%; }
-.cast-person--patrick { left: 65.63%; top: 16.82%; width: 7.55%; height: 74.77%; }
-.cast-person--margaret { left: 75.26%; top: 13.08%; width: 6.77%; height: 35.51%; }
-.cast-person--elizabeth { left: 81.77%; top: 15.89%; width: 8.07%; height: 72.90%; }
+.cast-person--actor-1 { left: 30.73%; top: 28.04%; width: 6.25%; height: 48.60%; }
+.cast-person--actor-2 { left: 59.64%; top: 26.17%; width: 7.30%; height: 40.19%; }
+.cast-person--actor-3 { left: 35.94%; top: 22.43%; width: 6.77%; height: 56.07%; }
+.cast-person--actor-4 { left: 65.63%; top: 16.82%; width: 7.55%; height: 74.77%; }
+.cast-person--actor-5 { left: 75.26%; top: 13.08%; width: 6.77%; height: 35.51%; }
+.cast-person--actor-6 { left: 81.77%; top: 15.89%; width: 8.07%; height: 72.90%; }
 @media (max-width: 700px) { .cast-stage { width: 1400px; } }
 @media (hover: hover) and (pointer: fine) { .cast-row { cursor: grab; } }
 .cast-row[data-dragging="true"] { scroll-snap-type: none; cursor: grabbing; user-select: none; }
