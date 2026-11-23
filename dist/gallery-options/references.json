@@ -1,0 +1,72 @@
+[
+  {
+    "id": "loose",
+    "title": "Loose prints",
+    "source": "Sruthi \u00b7 b-roll",
+    "url": "https://www.awwwards.com/inspiration/b-roll-life-in-photo-albums-sruthis-creative-portfolio",
+    "adaptation": "Loose photographic prints with offset columns and a soft lift on hover."
+  },
+  {
+    "id": "case",
+    "title": "Display case",
+    "source": "Alex / Avery Beige \u00b7 Vitrine",
+    "url": "https://www.awwwards.com/inspiration/vitrine-inspired-photo-gallery-alex-avery-beige-artist",
+    "adaptation": "A single photograph inside a deep display frame, with direct previous and next controls."
+  },
+  {
+    "id": "museum",
+    "title": "Museum wall",
+    "source": "Cybear \u00b7 Photo exhibition",
+    "url": "https://www.awwwards.com/inspiration/a-museum-of-18-photographs-by-cybear-cybear-world",
+    "adaptation": "Framed photographs arranged along a horizontally browsable exhibition wall."
+  },
+  {
+    "id": "timeline",
+    "title": "Timeline",
+    "source": "Gianpaolo Tucci \u00b7 Timeline view",
+    "url": "https://www.awwwards.com/inspiration/timeline-view-gianpaolo-tucci",
+    "adaptation": "A vertical sequence with a central track and alternating photographs."
+  },
+  {
+    "id": "collage",
+    "title": "On set",
+    "source": "First December Films \u00b7 On set",
+    "url": "https://www.awwwards.com/inspiration/on-set-first-december-films",
+    "adaptation": "A dark, tightly packed collage for documentary and production photography."
+  },
+  {
+    "id": "index",
+    "title": "Photo index",
+    "source": "Chris Williams \u00b7 Cursor preview",
+    "url": "https://www.awwwards.com/inspiration/index-with-cursor-preview-chris-williams-art-gallery",
+    "adaptation": "Large text rows reveal photographs on hover or keyboard focus; click opens the viewer."
+  },
+  {
+    "id": "flip",
+    "title": "Grid / slider",
+    "source": "Ruben Walma \u00b7 Gallery to slider",
+    "url": "https://www.awwwards.com/inspiration/gallery-to-slider-flip-animation-ruben-walma",
+    "adaptation": "Switch between a broad overview and a focused horizontal sequence."
+  },
+  {
+    "id": "strip",
+    "title": "Filmstrip",
+    "source": "Stellar Management \u00b7 Horizontal gallery",
+    "url": "https://www.awwwards.com/inspiration/horizontal-gallery-stellar-management",
+    "adaptation": "Large uncropped images in a native horizontal strip with scroll snapping."
+  },
+  {
+    "id": "contact",
+    "title": "Contact sheet",
+    "source": "ViV \u00b7 Gallery",
+    "url": "https://www.awwwards.com/inspiration/gallery-viv",
+    "adaptation": "A compact edge-to-edge grid with an immediate full-screen photo viewer."
+  },
+  {
+    "id": "fan",
+    "title": "Photo deck",
+    "source": "Andreas Portfolio \u00b7 Gallery interaction",
+    "url": "https://www.awwwards.com/inspiration/gallery-interaction-andreas-portfolio",
+    "adaptation": "Overlapping rotated photographs; step through the deck or open the current image."
+  }
+]

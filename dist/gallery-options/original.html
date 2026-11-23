@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Run Amok — Photos</title><link rel="stylesheet" href="styles.css"><script src="app.js" defer></script></head>
+<body>
+<header class="album-bar"><a class="home" href="../#more" aria-label="Back to Run Amok">← Run Amok</a><nav aria-label="Photo albums" id="albums"></nav></header>
+<main><h1 class="sr-only">Run Amok photo albums</h1><div id="gallery" class="photo-wall" aria-label="Album photographs"></div><p id="status" role="status" hidden></p></main>
+<dialog aria-label="Photograph viewer"><div class="viewer-bar"><span id="album-name"></span><button id="close" aria-label="Close photograph">Close ×</button></div><div class="viewer-stage"><button id="previous" aria-label="Previous photograph">←</button><img id="full-photo" alt=""><button id="next" aria-label="Next photograph">→</button></div><div class="viewer-caption"><span id="photo-name" aria-live="polite"></span><span id="count"></span><a id="photo-credit" target="_blank" rel="noopener"></a></div><p id="load-error" role="status" hidden></p></dialog>
+</body></html>
