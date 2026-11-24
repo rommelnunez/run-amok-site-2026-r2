@@ -365,17 +365,17 @@ body:has(.hero:is([data-reveal="opening"],[data-reveal="open"],[data-reveal="clo
 .outlet-wordmark { font-size: 20px; font-weight: 600; }
 
 /* Photographic paper and the address side of the envelope */
-#more { min-height: 0; padding-top: clamp(34px, 4vw, 48px); padding-inline: 0; padding-bottom: calc(130px + env(safe-area-inset-bottom)); }
+#more { min-height: 0; padding-top: clamp(34px, 4vw, 48px); padding-inline: 0; padding-bottom: clamp(8px, 2vw, 24px); }
 .bts-inset { width: min(88%, 1260px); margin-inline: auto; text-align: left; }
 #bts-title { margin-block: 0 4px; }
 .bts-stage {
   --stage-motion: var(--motion-portal) var(--ease-out);
   --paper-grain: url("assets/envelope-paper.jpg");
   position: relative;
-  min-height: clamp(505px, 50vw, 628px);
+  min-height: clamp(463px, 45.6vw, 564px);
   overflow: clip;
 }
-.photo-stack { position: absolute; inset: 0 auto clamp(58px, 5.6vw, 80px) 50%; display: grid; width: min(100%, 930px); margin: 0; transform: translateX(-50%); transition: transform var(--stage-motion), opacity var(--stage-motion); }
+.photo-stack { position: absolute; inset: 0 auto 16px 50%; display: grid; width: min(100%, 930px); margin: 0; transform: translateX(-50%); transition: transform var(--stage-motion), opacity var(--stage-motion); }
 .bts-stage:not([data-mode="photos"]) .photo-stack { transform: translateX(calc(-100vw - 50%)); opacity: 0; }
 .photo-table { position: relative; min-width: 0; container-type: inline-size; user-select: none; -webkit-user-select: none; }
 .photo-table:focus-visible { outline-offset: -3px; }
@@ -403,7 +403,7 @@ body:has(.hero:is([data-reveal="opening"],[data-reveal="open"],[data-reveal="clo
 .photo-print[data-lifted="true"]::after { background: linear-gradient(115deg, #fffbf322, #fff0 47%, #fff5d62f 88%); }
 .photo-fallback { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-7deg); }
 
-#notify { --paper-grain: url("assets/envelope-paper.jpg"); min-height: 68svh; padding-inline: 6%; padding-block: clamp(58px, 8vw, 96px) calc(130px + env(safe-area-inset-bottom)); }
+#notify { --paper-grain: url("assets/envelope-paper.jpg"); min-height: 68svh; padding-inline: 6%; padding-block: clamp(24px, 4vw, 64px) calc(130px + env(safe-area-inset-bottom)); }
 .envelope {
   position: relative;
   width: clamp(372px, 56vw, 780px);
@@ -522,11 +522,16 @@ body:has(.hero:is([data-reveal="opening"],[data-reveal="open"],[data-reveal="clo
   .film-sheet { grid-template-columns: 1fr; }
   .film-poster { width: min(100%, 410px); }
   .press-grid { grid-template-columns: 1fr; }
-  .bts-stage { min-height: clamp(405px, 109vw, 530px); }
+  .bts-stage { min-height: clamp(363px, calc(109vw - 42px), 488px); }
   .photo-print { --print-width: min(61cqw, 345px); }
   .envelope { width: min(88vw, 780px); }
   .bts-stage[data-mode="photos"] .envelope-postage { width: 52px; }
-  .envelope-form, .envelope-confirmation:not(:empty) { width: 79%; margin: 22% 0 0 4%; }
+  /* Phones: smaller stamp, a taller open envelope, and the form anchored below the stamp. */
+  .envelope-postage { top: 7%; width: 28%; }
+  #notify:not([data-mode="closed"]) .envelope { aspect-ratio: 1.3; }
+  .envelope-form, .envelope-confirmation:not(:empty) { position: absolute; inset: auto 7% 9%; width: auto; margin: 0; }
+  .envelope-form label { font-size: 11vw; white-space: nowrap; }
+  .envelope-confirmation strong { font-size: 9vw; }
   #envelope-close { font-size: 12px; }
 }
 @media (max-width: 700px) {
