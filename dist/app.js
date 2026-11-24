@@ -317,6 +317,22 @@ castRow.addEventListener('click', event => {
   button.setAttribute('aria-pressed', String(nextPressed));
 });
 castRow.addEventListener('dragstart', event => event.preventDefault());
+// On phones, vertical page scrolling pans the pinned cast stage. Scrolling stays native.
+const castSection = document.querySelector('#cast');
+const castScrollLinked = matchMedia('(max-width: 700px) and (prefers-reduced-motion: no-preference)');
+function syncCastScrollLink() {
+  castSection.dataset.scrollLinked = String(castScrollLinked.matches);
+  updateCastPan();
+}
+function updateCastPan() {
+  if (!castScrollLinked.matches) return;
+  const box = castSection.getBoundingClientRect();
+  const travel = box.height - innerHeight;
+  const progress = travel > 0 ? Math.min(1, Math.max(0, -box.top / travel)) : 0;
+  castRow.scrollLeft = progress * (castRow.scrollWidth - castRow.clientWidth);
+}
+castScrollLinked.addEventListener('change', syncCastScrollLink);
+syncCastScrollLink();
 
 const photoStack = document.querySelector('.photo-stack');
 const notifySection = document.querySelector('.notify-section');
@@ -391,6 +407,7 @@ function scheduleScrollUpdate() {
   scrollFrame = requestAnimationFrame(() => {
     scrollFrame = 0;
     updateNavigation(readCurrentSection());
+    updateCastPan();
   });
 }
 window.addEventListener('scroll', scheduleScrollUpdate, {passive:true});
