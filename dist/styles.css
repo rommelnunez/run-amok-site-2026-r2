@@ -50,6 +50,9 @@
  --motion-portal: 760ms;
  --motion-envelope-delay: 120ms;
  --nav-bottom: calc(76px + env(safe-area-inset-bottom));
+ /* One content column for Cast, Film, Press, and Behind the scenes. */
+ --content-gutter: clamp(22px, 4.5vw, 88px);
+ --content-max: 1440px;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 0; scrollbar-gutter: stable; }
@@ -227,9 +230,9 @@ body:has(.hero:is([data-reveal="opening"],[data-reveal="open"],[data-reveal="clo
 .text-control { min-height: 44px; padding: 0 3px; font-size: 13px; font-weight: 500; white-space: nowrap; text-decoration: underline; text-underline-offset: 4px; }
 .text-control:hover { text-decoration-thickness: 2px; }
 .text-control:disabled { opacity: .55; cursor: default; text-decoration: none; }
-.cast-section, #film { min-height: 0; padding-inline: clamp(22px, 4.5vw, 88px); padding-bottom: clamp(40px, 6vw, 88px); text-align: left; }
+.cast-section, #film { min-height: 0; padding-inline: var(--content-gutter); padding-bottom: clamp(40px, 6vw, 88px); text-align: left; }
 .cast-section { padding-top: clamp(40px, 6vw, 88px); }
-.cast-section .screen-copy, .film-sheet { width: min(100%, 1440px); text-align: left; }
+.cast-section .screen-copy, .film-sheet { width: min(100%, var(--content-max)); text-align: left; }
 .cast-row {
   overflow-x: auto;
   overflow-y: hidden;
@@ -344,8 +347,8 @@ body:has(.hero:is([data-reveal="opening"],[data-reveal="open"],[data-reveal="clo
 .film-poster img { display: block; width: 100%; height: auto; }
 
 /* Press */
-#press { min-height: 0; padding-block: clamp(28px, 4vw, 56px) clamp(12px, 1.4vw, 20px); }
-.press-section { width: min(100%, 1260px); }
+#press { min-height: 0; padding-inline: var(--content-gutter); padding-block: clamp(28px, 4vw, 56px) clamp(12px, 1.4vw, 20px); }
+.press-section { width: min(100%, var(--content-max)); }
 .press-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(40px, 4.5vw, 64px) 0; }
 /* Each quote spans two shared rows: quotes center in the first, logos share a line in the second. */
 .press-quote { min-width: 0; margin: 0; padding-inline: clamp(16px, 2.4vw, 34px); display: grid; grid-row: span 2; grid-template-rows: subgrid; row-gap: clamp(12px, 1.2vw, 18px); }
@@ -366,8 +369,8 @@ body:has(.hero:is([data-reveal="opening"],[data-reveal="open"],[data-reveal="clo
 
 /* Photographic paper and the address side of the envelope */
 #more { min-height: 0; padding-top: clamp(34px, 4vw, 48px); padding-inline: 0; padding-bottom: clamp(8px, 2vw, 24px); }
-.bts-inset { width: min(88%, 1260px); margin-inline: auto; text-align: left; }
-#bts-title { margin-block: 0 4px; }
+.bts-inset { width: min(100% - 2 * var(--content-gutter), var(--content-max)); margin-inline: auto; text-align: left; }
+#bts-title { margin-block: 0 clamp(16px, 2.8vw, 40px); }
 .bts-stage {
   --stage-motion: var(--motion-portal) var(--ease-out);
   --paper-grain: url("assets/envelope-paper.jpg");
@@ -518,7 +521,7 @@ body:has(.hero:is([data-reveal="opening"],[data-reveal="open"],[data-reveal="clo
   .press-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 700px) {
-  .cast-section, #film { padding-inline: 6%; }
+  :root { --content-gutter: 6vw; }
   .film-sheet { grid-template-columns: 1fr; }
   .film-poster { width: min(100%, 410px); }
   .press-grid { grid-template-columns: 1fr; }
